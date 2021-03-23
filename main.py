@@ -1,8 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from croniter import croniter
 from datetime import datetime, timedelta
 import subprocess
+import sys
 import yaml
 
 SCHED_DIR = '/home/nicolai/.sched'
@@ -30,8 +31,10 @@ def execute(cmd):
         raise subprocess.CalledProcessError(return_code, cmd)
 
 def notify(msg):
-    process = subprocess.Popen(['notify-send', msg], stdout=subprocess.PIPE)
-    process.communicate()
+    #TODO: properly escape msg
+    process = subprocess.Popen(f'XDG_RUNTIME_DIR=/run/user/$(id -u) /usr/bin/notify-send "{msg}"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    o = process.communicate()
+    print(o)
 
 class Job:
     def __init__(self, name, data):
@@ -43,6 +46,7 @@ class Job:
         self.last_executed = spool.get(name, {}).get('last_executed', datetime.min)
         self.last_success = spool.get(name, {}).get('last_success', datetime.min)
         # self.status = None # SUCCESS, FAIL, …?
+        self.output = ""
     def __repr__(self):
         return f'<job "{self.name}">'
     def execute(self):
@@ -57,6 +61,7 @@ class Job:
         # errors are caught in main
         for l in execute(self.command):
             print('· ' + l, end="")
+            self.output += '\n' + l
         print("✅ Done!")
         self.last_success = datetime.now().replace(microsecond=0)
 
@@ -73,20 +78,30 @@ class Job:
         return next > last and next < now
         # last < next < now
 
+# notify("I'm alive!")
 
 jobs = [Job(name, data) for name, data in config['jobs'].items()]
 
+did_something = False
 has_errors = False
 for job in jobs:
     print(job)
     if job.is_due():
+        did_something = True
         print(f'⏲ {job} is due!')
         try:
             job.execute()
+            notify(f'{job.name} ran successfully ✅')
         except subprocess.CalledProcessError as e:
-            print(f'Error executing {job}: {e}')
+            print(f'Error executing {job}: {e}', file=sys.stderr)
             notify(f'Error executing {job}: {e}')
+            with open(f'{SCHED_DIR}/{job.name}_log.txt', 'w') as error_log_file:
+                error_log_file.write(job.output)
             has_errors = True
+
+if not did_something:
+    # no need to write that file every minute
+    exit(0)
 
 with open(SPOOL_FILE, 'w') as yaml_file:
     job_to_last_executed = {job.name: {'last_executed': job.last_executed, 'last_success': job.last_success} for job in jobs}

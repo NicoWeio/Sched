@@ -43,12 +43,19 @@ class Job:
         self.schedule = data['schedule']
         # when the job was last executed SUCCESSFULLY
         # self.last_executed = (datetime.now() - timedelta(hours=2)).replace(microsecond=0)
-        self.last_executed = spool.get(name, {}).get('last_executed', datetime.min)
-        self.last_success = spool.get(name, {}).get('last_success', datetime.min)
+        self.last_executed = spool['jobs'].get(name, {}).get('last_executed', datetime.min)
+        self.last_success = spool['jobs'].get(name, {}).get('last_success', datetime.min)
         # self.status = None # SUCCESS, FAIL, …?
         self.output = ""
     def __repr__(self):
         return f'<job "{self.name}">'
+
+    def to_spool(self):
+        return {
+            'last_executed': self.last_executed,
+            'last_success': self.last_success,
+        }
+
     def execute(self):
         print(f'⚙ Running: {self.command}')
         # process = subprocess.Popen(self.command.split(), stdout=subprocess.PIPE)
@@ -104,8 +111,8 @@ if not did_something:
     exit(0)
 
 with open(SPOOL_FILE, 'w') as yaml_file:
-    job_to_last_executed = {job.name: {'last_executed': job.last_executed, 'last_success': job.last_success} for job in jobs}
-    yaml.dump(job_to_last_executed, yaml_file, default_flow_style=False)
+    job_to_last_executed = {job.name: job.to_spool() for job in jobs}
+    yaml.dump({'jobs': job_to_last_executed}, yaml_file, default_flow_style=False)
 
 if has_errors:
     exit(1)

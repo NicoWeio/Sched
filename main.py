@@ -15,7 +15,6 @@ with open(CONFIG_FILE, 'r') as stream:
     except yaml.YAMLError as exc:
         print(exc)
 
-# SPOOL_FILE = f'{config["config"]["spool_dir"]}/spool.yml'
 SPOOL_FILE = SCHED_DIR + '/spool.yml'
 
 with open(SPOOL_FILE, 'r') as stream:
@@ -34,7 +33,6 @@ def notify(msg):
     #TODO: properly escape msg
     process = subprocess.Popen(f'XDG_RUNTIME_DIR=/run/user/$(id -u) /usr/bin/notify-send "{msg}"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     o = process.communicate()
-    print(o)
 
 class Job:
     def __init__(self, name, data):
@@ -47,7 +45,7 @@ class Job:
         self.last_success = spool['jobs'].get(name, {}).get('last_success', datetime.min)
         self.status = spool['jobs'].get(name, {}).get('status')
         self.output = ""
-        
+
     def __repr__(self):
         return f'<job "{self.name}">'
 
@@ -87,14 +85,14 @@ class Job:
             return next < now
 
     def is_due_regular(self):
-        iter = croniter(self.schedule, self.last_success)
-        next = iter.get_next(datetime)
         last = self.last_success
+        iter = croniter(self.schedule, last)
+        next = iter.get_next(datetime) # >last
         now = datetime.now().replace(microsecond=0)
         print(f"next: {str(next)}")
         print(f"last: {str(last)}")
         print(f"now:  {str(now)} ")
-        return next > last and next < now
+        return next < now
         # last < next < now
 
 # notify("I'm alive!")

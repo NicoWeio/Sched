@@ -108,7 +108,8 @@ for job in jobs:
         print(f'⏲ {job} is due!')
         try:
             job.execute()
-            notify(f'{job.name} ran successfully ✅')
+            dur = job.last_success - job.last_executed
+            notify(f'{job.name} ran successfully in {dur} ✅')
             job.status = 'SUCCESS'
         except subprocess.CalledProcessError as e:
             print(f'Error executing {job}: {e}', file=sys.stderr)

@@ -9,7 +9,7 @@ def notify(msg):
     o = process.communicate()
 
 def run(spool, config, SCHED_DIR):
-    notify("I'm alive!")
+    # notify("I'm alive!")
 
     jobs = [Job(name, data, spool) for name, data in config['jobs'].items()]
 

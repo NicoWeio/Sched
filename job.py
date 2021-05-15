@@ -16,6 +16,7 @@ class Job:
         self.name = name
         self.command = data['command']
         self.schedule = data['schedule']
+        self.time_limit = data.get('time_limit', 60*15) # TODO: configurable default
         # when the job was STARTED
         self.last_executed = spool['jobs'].get(name, {}).get('last_executed', datetime.min)
         # when the job ended SUCCESSFULLY

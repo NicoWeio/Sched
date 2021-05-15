@@ -1,6 +1,7 @@
 import subprocess
 import sys
 
+from time_limit import time_limit, TimeoutException
 from job import Job
 
 def notify(msg):
@@ -21,7 +22,8 @@ def run(spool, config, SCHED_DIR):
             did_something = True
             print(f'⏲ {job} is due!')
             try:
-                job.execute()
+                with time_limit(job.time_limit):
+                    job.execute()
                 dur = job.last_success - job.last_executed
                 notify(f'{job.name} ran successfully in {dur} ✅')
                 job.status = 'SUCCESS'
@@ -30,6 +32,11 @@ def run(spool, config, SCHED_DIR):
                 notify(f'Error executing {job}: {e}')
                 with open(f'{SCHED_DIR}/{job.name}_log.txt', 'w') as error_log_file:
                     error_log_file.write(job.output)
+                job.status = 'ERROR'
+                has_errors = True
+            except TimeoutException as e:
+                print(f'Timeout executing {job}: {e}', file=sys.stderr)
+                notify(f'Timeout executing {job}: {e}')
                 job.status = 'ERROR'
                 has_errors = True
 

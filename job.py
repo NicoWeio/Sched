@@ -2,12 +2,12 @@ from croniter import croniter
 from datetime import datetime, timedelta
 import subprocess
 
-def execute(cmd):
-    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
-    for stdout_line in iter(popen.stdout.readline, ""):
+def run_cmd(cmd):
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
+    for stdout_line in iter(p.stdout.readline, ""):
         yield stdout_line
-    popen.stdout.close()
-    return_code = popen.wait()
+    p.stdout.close()
+    return_code = p.wait()
     if return_code:
         raise subprocess.CalledProcessError(return_code, cmd)
 
@@ -36,17 +36,11 @@ class Job:
 
     def execute(self):
         print(f'⚙ Running: {self.command}')
-        # process = subprocess.Popen(self.command.split(), stdout=subprocess.PIPE)
-        # process = subprocess.Popen(self.command, stdout=subprocess.PIPE, shell=True)
-        # output, error = process.communicate()
-        # print(f"{output=}")
-        # print(f"{error=}")
-
         self.last_executed = datetime.now().replace(microsecond=0)
         # errors are caught in main
-        for l in execute(self.command):
+        for l in run_cmd(self.command):
             print('· ' + l, end="")
-            self.output += '\n' + l
+            self.output += '\n' + l.strip()
         print("✅ Done!")
         self.last_success = datetime.now().replace(microsecond=0)
 

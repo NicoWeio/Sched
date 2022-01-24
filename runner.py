@@ -1,15 +1,13 @@
 import subprocess
 import sys
 
-from time_limit import time_limit, TimeoutException
+from config import config, SCHED_DIR
 from job import Job
+from notifications import notify
+from time_limit import time_limit, TimeoutException
 
-def notify(msg):
-    #TODO: properly escape msg
-    process = subprocess.Popen(f'XDG_RUNTIME_DIR=/run/user/$(id -u) /usr/bin/notify-send "{msg}"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    o = process.communicate()
 
-def run(spool, config, SCHED_DIR):
+def run(spool):
     # notify("I'm alive!")
 
     jobs = [Job(name, data, spool) for name, data in config['jobs'].items()]
@@ -21,18 +19,18 @@ def run(spool, config, SCHED_DIR):
             with time_limit(job.time_limit):
                 job.execute()
             dur = job.last_success - job.last_executed
-            notify(f'{job.name} ran successfully in {dur} ✅')
+            notify(job.name, f'ran successfully in {dur}', icon='dialog-positive')
             job.status = 'SUCCESS'
         except subprocess.CalledProcessError as e:
             print(f'Error executing {job}: {e}', file=sys.stderr)
-            notify(f'Error executing {job}: {e}')
+            notify(job.name, f'encountered an error: {e}', icon='dialog-error', urgency='CRITICAL')
             with open(f'{SCHED_DIR}/{job.name}_log.txt', 'w') as error_log_file:
                 error_log_file.write(job.output)
             job.status = 'ERROR'
             has_errors = True
         except TimeoutException as e:
             print(f'Timeout executing {job}: {e}', file=sys.stderr)
-            notify(f'Timeout executing {job}: {e}')
+            notify(job.name, 'timed out', icon='dialog-error', urgency='CRITICAL')
             job.status = 'ERROR'
             has_errors = True
 

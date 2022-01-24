@@ -1,0 +1,10 @@
+[Unit]
+Description=Sched daemon
+
+[Service]
+ExecStart=/home/nicolai/Daten/Programmieren/Sched/sched_daemon.py
+Restart=always
+RestartSec=1min
+
+[Install]
+WantedBy=default.target

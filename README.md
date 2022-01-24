@@ -20,6 +20,19 @@ Das kann zum Beispiel über einen `crontab`-Eintrag erreicht werden:
 
     * * * * * /path/to/Sched/main.py > /dev/null
 
+### Systemd-Daemon
+Der Systemd-Daemon verhindert z.B. den Log-Spam von `cron`.
+TODO: `--user`-Flag?
+```shell
+systemctl --user link $(realpath sched_daemon.service) # zu Debug-Zwecken
+# systemctl --user daemon-reload
+# Prüfe, ob alles funktioniert:
+systemctl --user start sched_daemon.service
+systemctl --user status sched_daemon.service
+# Funktioniert? Dann „permanent“ starten:
+systemctl --user enable sched_daemon.service
+```
+
 ## Blick auf die Konkurrenz
 
 -   _cron_ ist natürlich der Standard. Wenn ich aber z.B. täglich um 16 Uhr einen Job ausführen möchte, den PC aber erst um 20 Uhr einschalte, wird der Job nicht ausgeführt.

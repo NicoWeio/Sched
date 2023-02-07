@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import click
-import config
 import fcntl
-from pathlib import Path
 import subprocess
+from pathlib import Path
+from sched import config
+
+import click
 import yaml
 
 

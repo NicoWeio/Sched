@@ -1,6 +1,8 @@
-from croniter import croniter
-from datetime import datetime, timedelta
 import subprocess
+from datetime import datetime, timedelta
+
+from croniter import croniter
+
 
 def run_cmd(cmd):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, universal_newlines=True)
@@ -11,12 +13,13 @@ def run_cmd(cmd):
     if return_code:
         raise subprocess.CalledProcessError(return_code, cmd)
 
+
 class Job:
     def __init__(self, name, data, spool):
         self.name = name
         self.command = data['command']
         self.schedule = data['schedule']
-        self.time_limit = data.get('time_limit', 60*15) # TODO: configurable default
+        self.time_limit = data.get('time_limit', 60*15)  # TODO: configurable default
         # when the job was STARTED
         self.last_executed = spool['jobs'].get(name, {}).get('last_executed', datetime.min)
         # when the job ended SUCCESSFULLY
@@ -53,13 +56,13 @@ class Job:
         if self.status == 'ERROR':
             last = self.last_executed
             now = datetime.now().replace(microsecond=0)
-            next = last + timedelta(hours=1) #TODO don't hardcode
+            next = last + timedelta(hours=1)  # TODO don't hardcode
             return next < now
 
     def is_due_regular(self):
         last = self.last_success
         iter = croniter(self.schedule, last)
-        next = iter.get_next(datetime) # >last
+        next = iter.get_next(datetime)  # >last
         now = datetime.now().replace(microsecond=0)
         print(f"next: {str(next)}")
         print(f"last: {str(last)}")

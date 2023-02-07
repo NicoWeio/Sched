@@ -1,10 +1,10 @@
 import subprocess
 import sys
 
-from config import config, SCHED_DIR
-from job import Job
-from notifications import notify
-from time_limit import time_limit, TimeoutException
+from .config import SCHED_DIR, config
+from .job import Job
+from .notifications import notify
+from .time_limit import TimeoutException, time_limit
 
 
 def run(spool):

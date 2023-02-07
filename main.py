@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from config import SPOOL_FILE
 import fcntl
-from notifications import notify
-from runner import run
+from sched.config import SPOOL_FILE
+from sched.runner import run
+
 import yaml
 
 
